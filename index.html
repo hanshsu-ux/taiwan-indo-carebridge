@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>台印照護好幫手 | Bisa! CareBridge</title>
+  <meta name="description" content="台灣長輩、雇主與印尼看護專屬雙向溝通發音板與照護學習平台">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+    body {
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pulse-btn:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-24">
+
+  <!-- 頂部導覽列 -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm px-4 py-3">
+    <div class="max-w-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl">🧓🤝🧕</span>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-tight" id="appTitle">
+            台印照護好幫手
+          </h1>
+          <p class="text-xs text-slate-500 font-medium" id="appSubTitle">Bisa! CareBridge 雙語照護網</p>
+        </div>
+      </div>
+
+      <!-- 模式切換按鈕 -->
+      <button id="modeToggleBtn" onclick="toggleMode()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-sm bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200">
+        <span id="modeIcon">👴</span>
+        <span id="modeText">長輩模式</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主內容容器 -->
+  <main class="max-w-2xl mx-auto px-4 pt-4">
+
+    <!-- 語音狀態提醒 -->
+    <div id="speechNotice" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-center justify-between shadow-xs">
+      <div class="flex items-center space-x-2">
+        <span>🔊</span>
+        <span id="speechStatusText">點擊卡片立即播放語音；長輩模式播印尼文，看護模式播中文</span>
+      </div>
+      <button onclick="document.getElementById('speechNotice').classList.add('hidden')" class="text-blue-500 font-bold px-2">✕</button>
+    </div>
+
+    <!-- TAB 1: 雙向發音板 -->
+    <section id="tabContentBoard" class="space-y-5">
+      <!-- 快速求救與急迫狀態區 -->
+      <div>
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 class="text-base font-bold text-slate-900 flex items-center space-x-1.5">
+            <span class="text-red-500">⚡</span>
+            <span id="quickCardSectionTitle">快速發聲板 (點擊立即播放)</span>
+          </h2>
+          <span class="text-xs text-slate-400 font-medium">Papan Suara Cepat</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3" id="quickCardsGrid"></div>
+      </div>
+
+      <!-- 台語高頻照護常用句 -->
+      <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 shadow-xs">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-bold text-amber-900 flex items-center space-x-1.5">
+              <span>🗣️</span>
+              <span>台灣長輩台語照護實用語 (Hokkien)</span>
+            </h3>
+            <p class="text-xs text-amber-700">長輩習慣講台語，看護看拼音也能懂</p>
+          </div>
+          <span class="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-md font-bold">10 句常用</span>
+        </div>
+
+        <div class="space-y-2.5" id="taiwanesePhrasesList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: 情境單字學習區 -->
+    <section id="tabContentLearn" class="hidden space-y-4">
+      <div class="relative">
+        <input type="text" id="vocabSearchInput" oninput="filterVocab()" placeholder="🔍 搜尋中文、印尼文、拼音 (Cari kata)..." class="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-xs text-sm">
+        <button onclick="document.getElementById('vocabSearchInput').value=''; filterVocab();" class="absolute right-3 top-3 text-slate-400 text-sm hover:text-slate-600">✕</button>
+      </div>
+
+      <div class="flex overflow-x-auto space-x-2 py-1 scrollbar-none text-xs" id="categoryPills"></div>
+
+      <div class="text-xs text-slate-500 flex justify-between items-center px-1">
+        <span id="vocabCount">共 170 個實用單字</span>
+        <span class="text-emerald-600 font-medium">點選 🔊 聽發音</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="vocabGrid"></div>
+    </section>
+
+    <!-- TAB 3: 每日工作清單 -->
+    <section id="tabContentTasks" class="hidden space-y-4">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-emerald-950 flex items-center space-x-1.5">
+            <span>📋</span>
+            <span>每日照護檢查表 (Daftar Tugas)</span>
+          </h2>
+          <p class="text-xs text-emerald-700 mt-0.5" id="taskProgressText">今日進度：0 / 36 已完成</p>
+        </div>
+        <button onclick="resetTasks()" class="text-xs font-semibold px-2.5 py-1.5 bg-white border border-emerald-300 text-emerald-800 rounded-lg hover:bg-emerald-100 transition shadow-xs">
+          重新計數
+        </button>
+      </div>
+
+      <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+        <div id="taskProgressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <div class="space-y-2.5" id="taskListContainer"></div>
+    </section>
+
+    <!-- TAB 4: 文化與客製備忘 -->
+    <section id="tabContentMemo" class="hidden space-y-5">
+      <div class="space-y-3">
+        <h2 class="text-base font-bold text-slate-900 flex items-center space-x-1.5">
+          <span>🕌</span>
+          <span>宗教文化與生活習性指引</span>
+        </h2>
+        <div class="space-y-3" id="cultureCardsContainer"></div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-1.5">
+            <span>📝</span>
+            <span>專屬長輩照護備忘錄 (Catatan Khusus)</span>
+          </h3>
+          <span class="text-xs text-slate-400">即時自動儲存</span>
+        </div>
+        <p class="text-xs text-slate-500">輸入阿公阿嬤特殊習慣（如：對海鮮過敏、早上八點吃降血壓藥），隨時查看。</p>
+        <textarea id="customMemoInput" oninput="saveCustomMemo()" rows="4" placeholder="例如：\n1. 阿公喝水要溫熱，不能喝冰的。\n2. 早上 08:30 飯後吃白色高血壓藥。\n3. 翻身時請輕拍背部預防壓瘡。" class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm leading-relaxed"></textarea>
+        <div class="flex justify-end">
+          <button onclick="speakText(document.getElementById('customMemoInput').value, 'zh-TW')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition">
+            <span>🔊</span>
+            <span>朗讀備忘錄</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 底部固定導覽列 -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 py-1.5 px-3">
+    <div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center">
+      <button onclick="switchTab('board')" id="navBtnBoard" class="flex flex-col items-center justify-center py-1 text-emerald-600 font-bold transition">
+        <span class="text-xl">🗣️</span>
+        <span class="text-[11px] mt-0.5" id="navLabelBoard">發音板</span>
+      </button>
+
+      <button onclick="switchTab('learn')" id="navBtnLearn" class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-emerald-600 transition font-medium">
+        <span class="text-xl">📖</span>
+        <span class="text-[11px] mt-0.5" id="navLabelLearn">單字庫</span>
+      </button>
+
+      <button onclick="switchTab('tasks')" id="navBtnTasks" class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-emerald-600 transition font-medium">
+        <span class="text-xl">✅</span>
+        <span class="text-[11px] mt-0.5" id="navLabelTasks">檢查表</span>
+      </button>
+
+      <button onclick="switchTab('memo')" id="navBtnMemo" class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-emerald-600 transition font-medium">
+        <span class="text-xl">📝</span>
+        <span class="text-[11px] mt-0.5" id="navLabelMemo">文化備忘</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 注入完整資料與應用邏輯 -->
+  <script>
+    const careData = {"version": "1.0.0", "appName": "台印照護好幫手 / Bisa! CareBridge", "summary": {"totalWords": 170, "totalSentences": 32, "totalTasks": 36, "totalTaiwanesePhrases": 10, "totalQuickCards": 8}, "quickCards": [{"id": "q_1", "zh": "我需要幫忙", "zh_tw": "我需要幫忙", "tw": "需要鬥相共 (ài tàu-sann-kāng)", "zh_indo": "wo syu yau bang mang", "id_text": "Tolong bantu saya", "id_zh": "陀龍・班督・撒雅", "type": "emergency", "color": "red", "icon": "🚨"}, {"id": "q_2", "zh": "我想喝溫水", "zh_tw": "我想喝溫水", "tw": "愛飲溫水 (ài lim un-tsuí)", "zh_indo": "wo siang he uen syuei", "id_text": "Mau minum air hangat", "id_zh": "茂・米濃・阿伊爾・杭雅", "type": "need", "color": "blue", "icon": "💧"}, {"id": "q_3", "zh": "我想上廁所", "zh_tw": "我想上廁所", "tw": "愛放尿/放屎 (ài pàng-jiō)", "zh_indo": "wo siang sang ce suo", "id_text": "Mau ke toilet", "id_zh": "茂・克・脫伊勒", "type": "need", "color": "yellow", "icon": "🚻"}, {"id": "q_4", "zh": "該吃藥了", "zh_tw": "該吃藥了", "tw": "愛呷藥仔 (ài tsia̍h-io̍h)", "zh_indo": "gai ce yau le", "id_text": "Waktunya minum obat", "id_zh": "瓦克督尼亞・米濃・歐拔", "type": "care", "color": "emerald", "icon": "💊"}, {"id": "q_5", "zh": "哪裡在痛？", "zh_tw": "哪裡在痛？", "tw": "佗位在痛？ (tó-uī teh thiànn)", "zh_indo": "na li dzai tong", "id_text": "Sakit di mana?", "id_zh": "撒吉・第・馬納？", "type": "medical", "color": "amber", "icon": "🤕"}, {"id": "q_6", "zh": "我肚子餓了", "zh_tw": "我肚子餓了", "tw": "腹肚枵矣 (pat-tóu iau--ah)", "zh_indo": "wo du zi e le", "id_text": "Saya lapar", "id_zh": "撒雅・拉帕爾", "type": "need", "color": "orange", "icon": "🍲"}, {"id": "q_7", "zh": "我覺得冷", "zh_tw": "我覺得冷", "tw": "身軀足寒 (sin-khu tsiok kuânn)", "zh_indo": "wo jyue de leng", "id_text": "Saya merasa dingin", "id_zh": "撒雅・默拉薩・丁銀", "type": "feeling", "color": "sky", "icon": "🥶"}, {"id": "q_8", "zh": "該量血壓了", "zh_tw": "該量血壓了", "tw": "愛量血壓 (ài liông hueh-ap)", "zh_indo": "gai liang syue ya le", "id_text": "Saatnya ukur tekanan darah", "id_zh": "撒阿特尼亞・烏庫爾・特卡南達拉", "type": "care", "color": "indigo", "icon": "🩺"}], "taiwanesePhrases": [{"id": "tw_1", "tw": "愛放尿", "tw_roman": "ài pàng-jiō", "zh": "我想上廁所（小便）", "zh_indo_spell": "wo siang sang ce suo", "id_text": "Mau buang air kecil (kencing)", "id_zh_approx": "茂・布昂・阿伊爾・克吉爾", "urgency": "high", "icon": "🚻"}, {"id": "tw_2", "tw": "愛呷藥仔", "tw_roman": "ài tsia̍h-io̍h-á", "zh": "該吃藥了", "zh_indo_spell": "gai ce yau le", "id_text": "Waktunya minum obat", "id_zh_approx": "瓦克督尼亞・米濃・歐拔", "urgency": "medium", "icon": "💊"}, {"id": "tw_3", "tw": "身軀痛", "tw_roman": "sin-khu thiànn", "zh": "身體會痛", "zh_indo_spell": "sen ti huei tong", "id_text": "Badan sakit", "id_zh_approx": "巴丹・撒吉", "urgency": "high", "icon": "🤕"}, {"id": "tw_4", "tw": "心肝頭足慒", "tw_roman": "sim-kuann-thâu tsiok tso", "zh": "胸口很悶不舒服", "zh_indo_spell": "siong kou hen men", "id_text": "Dada sesak / tidak enak", "id_zh_approx": "達達・色薩 / 提達・厄納", "urgency": "high", "icon": "🫁"}, {"id": "tw_5", "tw": "愛飲溫水", "tw_roman": "ài lim un-tsuí", "zh": "我想喝溫水", "zh_indo_spell": "wo siang he uen syuei", "id_text": "Mau minum air hangat", "id_zh_approx": "茂・米濃・阿伊爾・杭雅", "urgency": "medium", "icon": "🥛"}, {"id": "tw_6", "tw": "愛睏", "tw_roman": "ài-khùn", "zh": "我想睡覺了", "zh_indo_spell": "wo siang suei jiau le", "id_text": "Mau tidur", "id_zh_approx": "茂・提杜爾", "urgency": "low", "icon": "🛌"}, {"id": "tw_7", "tw": "慢慢行，毋通跋倒", "tw_roman": "bān-bān kiânn, m̄-thang pua̍h-tó", "zh": "慢慢走，不要跌倒", "zh_indo_spell": "man man dzou, bu yau die dau", "id_text": "Jalan pelan-pelan, jangan jatuh", "id_zh_approx": "架藍・培藍培藍，匠安・架突", "urgency": "high", "icon": "🚶"}, {"id": "tw_8", "tw": "呷飽未？", "tw_roman": "tsia̍h-pá--buē?", "zh": "吃飽了嗎？", "zh_indo_spell": "ce bau le ma", "id_text": "Sudah makan belum?", "id_zh_approx": "蘇達・馬干・布隆？", "urgency": "medium", "icon": "🍚"}, {"id": "tw_9", "tw": "愛擦身軀", "tw_roman": "ài chhat sin-khu", "zh": "要擦澡清潔身體", "zh_indo_spell": "yau tsa dzau", "id_text": "Mau seka badan / lap tubuh", "id_zh_approx": "茂・色卡・巴丹", "urgency": "medium", "icon": "🧼"}, {"id": "tw_10", "tw": "緊倒落來休睏", "tw_roman": "kín tó--lo̍h-lâi hiu-khùn", "zh": "快躺下來休息", "zh_indo_spell": "kuai tang sia lai siou si", "id_text": "Cepat berbaring dan istirahat", "id_zh_approx": "車拔・伯爾巴令・丹・伊斯提拉哈", "urgency": "medium", "icon": "🛏️"}], "dailyTasks": [{"id": "t_1", "time": "06:00", "zh_full": "量血壓、血糖、血氧並記錄\nliang syue ya syue tang syue yang bing ci lu", "id_full": "Ukur tekanan darah, gula darah, oksigen, lalu catat\n烏庫爾・特卡南達拉、古拉達拉、歐西根，拉魯・查達"}, {"id": "t_2", "time": "彈性時間", "zh_full": "拍痰\npai tan", "id_full": "Tepuk punggung untuk keluarkan dahak\n特布・崩公・溫度・克魯阿爾干・達哈"}, {"id": "t_3", "time": "彈性時間", "zh_full": "更換尿布\ngeng huan niau bu", "id_full": "Ganti popok\n干地・波波"}, {"id": "t_4", "time": "彈性時間", "zh_full": "用清水或消毒溫水清洗會陰部\nyong cing syuei huo syiau du uen syuei cing syi huei in bu", "id_full": "Bersihkan area kemaluan dengan air hangat bersih atau air antiseptik\n貝爾西干・阿雷阿・克馬魯安・登安・愛爾哈阿・貝爾西・阿島・愛爾安地些替"}, {"id": "t_5", "time": "彈性時間", "zh_full": "屁股擦乾淨，塗凡士林\npi gu tsa gan cing tu fan sye lin", "id_full": "Keringkan bokong sampai benar-benar kering, lalu oleskan Vaseline\n克林干・波公・山拜・貝那貝那・克林，拉魯・歐雷斯干・凡士林"}, {"id": "t_6", "time": "07:00", "zh_full": "餵牛奶（灌食）\nuei niou nai guan sye", "id_full": "Beri susu lewat selang\n貝利・蘇蘇・雷瓦・斯朗"}, {"id": "t_7", "time": "彈性時間", "zh_full": "床頭先搖高 45～60 度\ncuang tou syien yau gau du", "id_full": "Naikkan kepala tempat tidur 45 sampai 60 derajat dulu\n耐干・克巴拉・談巴地都爾・恩巴布魯利馬・山拜・恩南布魯・德拉架・都魯"}, {"id": "t_8", "time": "彈性時間", "zh_full": "★ 餵食前一定要反抽，不可省略\nuei sye cien i ding yau fan cou bu ke syeng lyue", "id_full": "★ WAJIB cek sisa lambung sebelum memberi susu. JANGAN PERNAH dilewati\n瓦吉・傑・西沙・藍蒙・斯波倫・門貝利蘇蘇。架安・貝爾那・地雷瓦地"}, {"id": "t_9", "time": "彈性時間", "zh_full": "餵完保持坐姿 30～60 分鐘才可躺平\nuei uan bau ce tsuo tse fen jong tsai ke tang ping", "id_full": "Setelah selesai, tetap posisi duduk 30 sampai 60 menit baru boleh dibaringkan\n斯特拉・斯勒賽，特搭・波西西・都都・地嘎布魯・山拜・恩南布魯・門尼・巴魯・波雷・地巴林干"}, {"id": "t_10", "time": "08:00", "zh_full": "擦臉\ntsa lien", "id_full": "Lap muka\n拉・母卡"}, {"id": "t_11", "time": "彈性時間", "zh_full": "清潔口腔\ncing cie kou ciang", "id_full": "Bersihkan mulut\n貝爾西干・母魯"}, {"id": "t_12", "time": "彈性時間", "zh_full": "更換鼻貼（每天貼不同位置）\ngeng huan bi tie mei tien tie bu tong uei je", "id_full": "Ganti plester hidung, tempel di posisi berbeda setiap hari\n干地・普雷斯特・希東，談貝・地・波西西・貝爾貝達・斯地阿・哈利"}, {"id": "t_13", "time": "彈性時間", "zh_full": "腳部伸展、拉筋運動\nciau bu syen jan la cin yun dong", "id_full": "Peregangan dan pelemasan kaki\n波雷剛安・丹・波雷馬三・卡基"}, {"id": "t_14", "time": "彈性時間", "zh_full": "檢查尿布，濕了就換\ncien ca niau bu sye le ciou huan", "id_full": "Periksa popok, ganti kalau basah\n波利沙・波波，干地・卡勞・巴沙"}, {"id": "t_15", "time": "09:00", "zh_full": "抱到輪椅上，手部拉筋、嘴巴按摩\nbau dau lun i syang syou bu la cin tsuei ba an mo", "id_full": "Pindahkan ke kursi roda, peregangan tangan dan pijat mulut\n冰達干・克・庫爾西羅達，波雷剛安・當安・丹・比架・母魯"}, {"id": "t_16", "time": "彈性時間", "zh_full": "在客廳坐著看電視\ntsai ke ting tsuo ju kan dien sye", "id_full": "Duduk di ruang tamu menonton TV\n都都・地・魯昂達母・門農動・貼歪"}, {"id": "t_17", "time": "09:30", "zh_full": "洗衣、曬衣或其他家事\nsyi i syai i huo ci ta cia sye", "id_full": "Cuci baju, jemur baju, atau pekerjaan rumah lain\n朱基巴朱，者母爾巴朱，阿島・波克爾架安・路馬・拉因"}, {"id": "t_18", "time": "11:00", "zh_full": "抱回床上休息\nbau huei cuang syang syiou syi", "id_full": "Pindahkan kembali ke tempat tidur untuk istirahat\n冰達干・肯巴利・克・談巴地都爾・溫度・衣斯地拉哈"}, {"id": "t_19", "time": "彈性時間", "zh_full": "拍痰\npai tan", "id_full": "Tepuk punggung untuk keluarkan dahak\n特布・崩公・溫度・克魯阿爾干・達哈"}, {"id": "t_20", "time": "彈性時間", "zh_full": "檢查尿布，濕了就換\ncien ca niau bu sye le ciou huan", "id_full": "Periksa popok, ganti kalau basah\n波利沙・波波，干地・卡勞・巴沙"}, {"id": "t_21", "time": "11:00–12:00", "zh_full": "準備午餐\njun bei u tsan", "id_full": "Siapkan makan siang\n西阿干・馬乾・西陽"}, {"id": "t_22", "time": "12:00", "zh_full": "★ 反抽後，餵牛奶或稀飯\nfan cou hou uei niou nai huo syi fan", "id_full": "★ Cek sisa lambung dulu, lalu beri susu atau bubur\n傑・西沙・藍蒙・都魯，拉魯・貝利・蘇蘇・阿島・布布爾"}, {"id": "t_23", "time": "彈性時間", "zh_full": "檢查尿布，濕了就換\ncien ca niau bu sye le ciou huan", "id_full": "Periksa popok, ganti kalau basah\n波利沙・波波，干地・卡勞・巴沙"}, {"id": "t_24", "time": "13:00", "zh_full": "午休\nu syiou", "id_full": "Istirahat siang\n衣斯地拉哈・西陽"}, {"id": "t_25", "time": "14:00", "zh_full": "檢查尿布，濕了就換\ncien ca niau bu sye le ciou huan", "id_full": "Periksa popok, ganti kalau basah\n波利沙・波波，干地・卡勞・巴沙"}, {"id": "t_26", "time": "14:30", "zh_full": "復健\nfu cien", "id_full": "Rehabilitasi / terapi\n雷哈比利搭西 / 特拉比"}, {"id": "t_27", "time": "15:30", "zh_full": "下課，讓病人休息\nsyia ke rang bing ren syiou syi", "id_full": "Terapi selesai, biarkan pasien istirahat\n特拉比・斯勒賽，比阿爾干・巴西恩・衣斯地拉哈"}, {"id": "t_28", "time": "16:00", "zh_full": "洗澡\nsyi tsau", "id_full": "Mandi\n曼地"}, {"id": "t_29", "time": "彈性時間", "zh_full": "拍痰\npai tan", "id_full": "Tepuk punggung untuk keluarkan dahak\n特布・崩公・溫度・克魯阿爾干・達哈"}, {"id": "t_30", "time": "17:00", "zh_full": "★ 反抽後餵奶\nfan cou hou uei nai", "id_full": "★ Cek sisa lambung dulu, lalu beri susu\n傑・西沙・藍蒙・都魯，拉魯・貝利・蘇蘇"}, {"id": "t_31", "time": "19:00", "zh_full": "手腳拉筋\nsyou ciau la cin", "id_full": "Peregangan tangan dan kaki\n波雷剛安・當安・丹・卡基"}, {"id": "t_32", "time": "20:00", "zh_full": "拍痰\npai tan", "id_full": "Tepuk punggung untuk keluarkan dahak\n特布・崩公・溫度・克魯阿爾干・達哈"}, {"id": "t_33", "time": "21:00", "zh_full": "★ 反抽後餵奶\nfan cou hou uei nai", "id_full": "★ Cek sisa lambung dulu, lalu beri susu\n傑・西沙・藍蒙・都魯，拉魯・貝利・蘇蘇"}, {"id": "t_34", "time": "22:00", "zh_full": "睡前換尿布\nsyuei cien huan niau bu", "id_full": "Ganti popok sebelum tidur\n干地・波波・斯波倫・地都爾"}, {"id": "t_35", "time": "01:00", "zh_full": "翻身\nfan syen", "id_full": "Balik badan\n巴利・巴丹"}, {"id": "t_36", "time": "04:00", "zh_full": "翻身\nfan syen", "id_full": "Balik badan\n巴利・巴丹"}], "cultureNotes": [{"title": "穆斯林清真飲食 (Halal) 規範", "title_id": "Pedoman Makanan Halal untuk Muslim", "category": "飲食文化", "content_zh": "絕大多數印尼看護為穆斯林。嚴格禁止食用豬肉（Babi）及含有豬油、豬骨高湯之食品。烹調器具與鍋具應盡量與烹調豬肉之器具分開清洗。雞肉、牛肉需選購具有清真認證（Halal）之標章。", "content_id": "Sebagian besar perawat Indonesia adalah Muslim. Dilarang keras makan daging babi dan minyak babi. Gunakan peralatan masak yang terpisah dari masakan babi. Makanan berlabel Halal sangat dianjurkan."}, {"title": "每日五次祈禱時間 (Sholat)", "title_id": "Jadwal Sholat 5 Waktu", "category": "宗教起居", "content_zh": "穆斯林每日需祈禱五次（Subuh 晨禮、Dzuhur 晌禮、Ashar 晡禮、Maghrib 昏禮、Isya 宵禮）。每次約需 10-15 分鐘。雇主若能在長輩安全的前提下提供片刻安靜空間，能建立深厚的勞雇信任。", "content_id": "Perawat Muslim melakukan sholat lima waktu dalam sehari (Subuh, Dzuhur, Ashar, Maghrib, Isya), masing-masing memakan waktu sekitar 10-15 menit."}, {"title": "台灣長輩生活習性小提醒", "title_id": "Kebiasaan Hidup Lansia Taiwan", "category": "在地生活", "content_zh": "1. 喜歡喝溫開水（長輩通常不喝冰水）。\n2. 進出浴室必須確保地板乾燥、穿著防滑拖鞋。\n3. 台灣傳統拜拜燒香時，若看護因信仰不便持香，雙方互相尊重即可。", "content_id": "1. Lansia Taiwan suka minum air hangat, hindari memberi air es.\n2. Lantai kamar mandi harus selalu kering untuk mencegah jatuh.\n3. Saling menghormati perbedaan tradisi dan kepercayaan."}], "words": [{"id": "w_1", "category": "01 問候禮貌", "id_text": "Selamat pagi", "id_zh_approx": "斯拉馬・巴基", "zh": "早安", "zh_pinyin": "zǎo ān", "zh_indo_spell": "tsau an", "image_desc": "清晨陽光照進房間，看護微笑向長輩問好"}, {"id": "w_2", "category": "01 問候禮貌", "id_text": "Selamat siang", "id_zh_approx": "斯拉馬・西陽", "zh": "午安", "zh_pinyin": "wǔ ān", "zh_indo_spell": "u an", "image_desc": "正午太陽高掛，兩人在客廳打招呼"}, {"id": "w_3", "category": "01 問候禮貌", "id_text": "Selamat sore", "id_zh_approx": "斯拉馬・搜勒", "zh": "午安", "zh_pinyin": "wǔ ān", "zh_indo_spell": "u an", "image_desc": "傍晚橘色天空下的問候"}, {"id": "w_4", "category": "01 問候禮貌", "id_text": "Selamat malam", "id_zh_approx": "斯拉馬・馬藍", "zh": "晚安", "zh_pinyin": "wǎn ān", "zh_indo_spell": "uan an", "image_desc": "夜晚月亮與床邊小夜燈"}, {"id": "w_5", "category": "01 問候禮貌", "id_text": "Terima kasih", "id_zh_approx": "特里馬・卡西", "zh": "謝謝", "zh_pinyin": "xiè xiè", "zh_indo_spell": "syie syie", "image_desc": "雙手合十道謝的動作"}, {"id": "w_6", "category": "01 問候禮貌", "id_text": "Sama-sama", "id_zh_approx": "沙馬・沙馬", "zh": "不客氣", "zh_pinyin": "bù kè qì", "zh_indo_spell": "bu ke ci", "image_desc": "兩人互相微笑點頭"}, {"id": "w_7", "category": "01 問候禮貌", "id_text": "Maaf", "id_zh_approx": "馬阿夫", "zh": "對不起", "zh_pinyin": "duì bù qǐ", "zh_indo_spell": "duei bu ci", "image_desc": "低頭致歉的表情"}, {"id": "w_8", "category": "01 問候禮貌", "id_text": "Tolong", "id_zh_approx": "多龍", "zh": "請幫忙", "zh_pinyin": "qǐng bāng máng", "zh_indo_spell": "cing bang mang", "image_desc": "伸手請求協助"}, {"id": "w_9", "category": "01 問候禮貌", "id_text": "Permisi", "id_zh_approx": "波爾米西", "zh": "借過", "zh_pinyin": "jiè guò", "zh_indo_spell": "cie guo", "image_desc": "側身經過並舉手示意"}, {"id": "w_10", "category": "01 問候禮貌", "id_text": "Ya", "id_zh_approx": "呀", "zh": "是", "zh_pinyin": "shì", "zh_indo_spell": "sye", "image_desc": "點頭比 OK 手勢"}, {"id": "w_11", "category": "01 問候禮貌", "id_text": "Tidak", "id_zh_approx": "笛達", "zh": "不", "zh_pinyin": "bù", "zh_indo_spell": "bu", "image_desc": "搖頭並雙手交叉"}, {"id": "w_12", "category": "01 問候禮貌", "id_text": "Baik", "id_zh_approx": "拜克", "zh": "好", "zh_pinyin": "hǎo", "zh_indo_spell": "hau", "image_desc": "微笑比 OK 手勢"}, {"id": "w_13", "category": "01 問候禮貌", "id_text": "Selamat makan", "id_zh_approx": "斯拉馬・馬乾", "zh": "請慢用", "zh_pinyin": "qǐng màn yòng", "zh_indo_spell": "cing man yong", "image_desc": "餐桌上端上飯菜"}, {"id": "w_14", "category": "02 稱謂", "id_text": "Bapak / Pak", "id_zh_approx": "巴巴克", "zh": "先生", "zh_pinyin": "xiān shēng", "zh_indo_spell": "syien syeng", "image_desc": "中年男性長輩坐在椅子上"}, {"id": "w_15", "category": "02 稱謂", "id_text": "Ibu / Bu", "id_zh_approx": "衣布", "zh": "太太", "zh_pinyin": "tài tài", "zh_indo_spell": "tai tai", "image_desc": "中年女性長輩微笑"}, {"id": "w_16", "category": "02 稱謂", "id_text": "Kakek", "id_zh_approx": "卡克", "zh": "爺爺", "zh_pinyin": "yé yé", "zh_indo_spell": "ye ye", "image_desc": "白髮爺爺拿著拐杖"}, {"id": "w_17", "category": "02 稱謂", "id_text": "Nenek", "id_zh_approx": "內內克", "zh": "奶奶", "zh_pinyin": "nǎi nǎi", "zh_indo_spell": "nai nai", "image_desc": "白髮奶奶坐在藤椅上"}, {"id": "w_18", "category": "02 稱謂", "id_text": "Anak", "id_zh_approx": "阿那克", "zh": "小孩", "zh_pinyin": "xiǎo hái", "zh_indo_spell": "syiau hai", "image_desc": "兩個小朋友在玩"}, {"id": "w_19", "category": "02 稱謂", "id_text": "Keluarga", "id_zh_approx": "克盧阿爾嘎", "zh": "家人", "zh_pinyin": "jiā rén", "zh_indo_spell": "cia ren", "image_desc": "三代同堂全家福"}, {"id": "w_20", "category": "02 稱謂", "id_text": "Dokter", "id_zh_approx": "多克特", "zh": "醫生", "zh_pinyin": "yī shēng", "zh_indo_spell": "i syeng", "image_desc": "穿白袍拿聽診器的醫生"}, {"id": "w_21", "category": "02 稱謂", "id_text": "Perawat", "id_zh_approx": "波拉瓦", "zh": "護士", "zh_pinyin": "hù shì", "zh_indo_spell": "hu sye", "image_desc": "穿護士服的護理人員"}, {"id": "w_22", "category": "02 稱謂", "id_text": "Saya", "id_zh_approx": "沙呀", "zh": "我", "zh_pinyin": "wǒ", "zh_indo_spell": "uo", "image_desc": "一個人用手指著自己"}, {"id": "w_23", "category": "02 稱謂", "id_text": "Anda / Kamu", "id_zh_approx": "安達 / 卡母", "zh": "你", "zh_pinyin": "nǐ", "zh_indo_spell": "ni", "image_desc": "一個人用手指向前方對方"}, {"id": "w_24", "category": "03 時間", "id_text": "Sekarang", "id_zh_approx": "斯卡朗", "zh": "現在", "zh_pinyin": "xiàn zài", "zh_indo_spell": "syien tsai", "image_desc": "時鐘與指向當下的手指"}, {"id": "w_25", "category": "03 時間", "id_text": "Nanti", "id_zh_approx": "南地", "zh": "等一下", "zh_pinyin": "děng yí xià", "zh_indo_spell": "deng i syia", "image_desc": "手掌做出等待手勢與沙漏"}, {"id": "w_26", "category": "03 時間", "id_text": "Hari ini", "id_zh_approx": "哈利・衣尼", "zh": "今天", "zh_pinyin": "jīn tiān", "zh_indo_spell": "cin tien", "image_desc": "月曆上圈起今天日期"}, {"id": "w_27", "category": "03 時間", "id_text": "Besok", "id_zh_approx": "貝索克", "zh": "明天", "zh_pinyin": "míng tiān", "zh_indo_spell": "ming tien", "image_desc": "月曆翻到下一頁"}, {"id": "w_28", "category": "03 時間", "id_text": "Kemarin", "id_zh_approx": "克馬林", "zh": "昨天", "zh_pinyin": "zuó tiān", "zh_indo_spell": "tsuo tien", "image_desc": "月曆往回翻一頁"}, {"id": "w_29", "category": "03 時間", "id_text": "Pagi", "id_zh_approx": "巴基", "zh": "早上", "zh_pinyin": "zǎo shàng", "zh_indo_spell": "tsau syang", "image_desc": "日出的地平線"}, {"id": "w_30", "category": "03 時間", "id_text": "Siang", "id_zh_approx": "西陽", "zh": "中午", "zh_pinyin": "zhōng wǔ", "zh_indo_spell": "jong u", "image_desc": "正午高掛的太陽"}, {"id": "w_31", "category": "03 時間", "id_text": "Sore", "id_zh_approx": "搜勒", "zh": "下午", "zh_pinyin": "xià wǔ", "zh_indo_spell": "syia u", "image_desc": "夕陽西下的天空"}, {"id": "w_32", "category": "03 時間", "id_text": "Malam", "id_zh_approx": "馬藍", "zh": "晚上", "zh_pinyin": "wǎn shàng", "zh_indo_spell": "uan syang", "image_desc": "夜空月亮與星星"}, {"id": "w_33", "category": "03 時間", "id_text": "Jam", "id_zh_approx": "醬", "zh": "點鐘", "zh_pinyin": "diǎn zhōng", "zh_indo_spell": "dien jong", "image_desc": "圓形掛鐘"}, {"id": "w_34", "category": "03 時間", "id_text": "Setiap hari", "id_zh_approx": "斯地阿・哈利", "zh": "每天", "zh_pinyin": "měi tiān", "zh_indo_spell": "mei tien", "image_desc": "一整排打勾的月曆"}, {"id": "w_35", "category": "03 時間", "id_text": "Hari libur", "id_zh_approx": "哈利・利布爾", "zh": "休假日", "zh_pinyin": "xiū jià rì", "zh_indo_spell": "syiou cia re", "image_desc": "月曆上標紅的休息日"}, {"id": "w_36", "category": "03 時間", "id_text": "Cepat", "id_zh_approx": "遮巴", "zh": "快一點", "zh_pinyin": "kuài yī diǎn", "zh_indo_spell": "kuai i dien", "image_desc": "跑步的動作線條"}, {"id": "w_37", "category": "03 時間", "id_text": "Pelan-pelan", "id_zh_approx": "波藍・波藍", "zh": "慢慢來", "zh_pinyin": "màn màn lái", "zh_indo_spell": "man man lai", "image_desc": "烏龜慢慢走"}, {"id": "w_38", "category": "04 照護動作", "id_text": "Bangun", "id_zh_approx": "邦棍", "zh": "起床", "zh_pinyin": "qǐ chuáng", "zh_indo_spell": "ci cuang", "image_desc": "長輩從床上坐起，看護攙扶"}, {"id": "w_39", "category": "04 照護動作", "id_text": "Tidur", "id_zh_approx": "地都爾", "zh": "睡覺", "zh_pinyin": "shuì jué", "zh_indo_spell": "syuei cyue", "image_desc": "長輩安穩躺在床上蓋被子"}, {"id": "w_40", "category": "04 照護動作", "id_text": "Duduk", "id_zh_approx": "都都克", "zh": "坐下", "zh_pinyin": "zuò xià", "zh_indo_spell": "tsuo syia", "image_desc": "長輩坐在椅子上"}, {"id": "w_41", "category": "04 照護動作", "id_text": "Berdiri", "id_zh_approx": "貝爾地利", "zh": "站起來", "zh_pinyin": "zhàn qǐ lái", "zh_indo_spell": "jan ci lai", "image_desc": "看護扶長輩站起"}, {"id": "w_42", "category": "04 照護動作", "id_text": "Jalan", "id_zh_approx": "架藍", "zh": "走路", "zh_pinyin": "zǒu lù", "zh_indo_spell": "tsou lu", "image_desc": "長輩使用助行器行走"}, {"id": "w_43", "category": "04 照護動作", "id_text": "Bantu", "id_zh_approx": "班度", "zh": "幫忙", "zh_pinyin": "bāng máng", "zh_indo_spell": "bang mang", "image_desc": "看護伸手協助"}, {"id": "w_44", "category": "04 照護動作", "id_text": "Angkat", "id_zh_approx": "昂卡", "zh": "抬起", "zh_pinyin": "tái qǐ", "zh_indo_spell": "tai ci", "image_desc": "雙手從腋下扶起長輩"}, {"id": "w_45", "category": "04 照護動作", "id_text": "Balik badan", "id_zh_approx": "巴利・巴丹", "zh": "翻身", "zh_pinyin": "fān shēn", "zh_indo_spell": "fan syen", "image_desc": "協助臥床長輩側翻身"}, {"id": "w_46", "category": "04 照護動作", "id_text": "Mandi", "id_zh_approx": "曼地", "zh": "洗澡", "zh_pinyin": "xǐ zǎo", "zh_indo_spell": "syi tsau", "image_desc": "浴室淋浴椅與蓮蓬頭"}, {"id": "w_47", "category": "04 照護動作", "id_text": "Ganti baju", "id_zh_approx": "干地・巴朱", "zh": "換衣服", "zh_pinyin": "huàn yī fú", "zh_indo_spell": "huan i fu", "image_desc": "協助長輩穿上衣"}, {"id": "w_48", "category": "04 照護動作", "id_text": "Ganti popok", "id_zh_approx": "干地・波波", "zh": "換尿布", "zh_pinyin": "huàn niào bù", "zh_indo_spell": "huan niau bu", "image_desc": "成人紙尿褲與護理用品"}, {"id": "w_49", "category": "04 照護動作", "id_text": "Sikat gigi", "id_zh_approx": "西卡・基基", "zh": "刷牙", "zh_pinyin": "shuā yá", "zh_indo_spell": "syua ya", "image_desc": "牙刷與漱口杯"}, {"id": "w_50", "category": "04 照護動作", "id_text": "Cuci tangan", "id_zh_approx": "朱基・當安", "zh": "洗手", "zh_pinyin": "xǐ shǒu", "zh_indo_spell": "syi syou", "image_desc": "在水龍頭下用肥皂洗手"}, {"id": "w_51", "category": "04 照護動作", "id_text": "Cuci muka", "id_zh_approx": "朱基・母卡", "zh": "洗臉", "zh_pinyin": "xǐ liǎn", "zh_indo_spell": "syi lien", "image_desc": "用毛巾擦臉"}, {"id": "w_52", "category": "04 照護動作", "id_text": "Potong kuku", "id_zh_approx": "波動・庫庫", "zh": "剪指甲", "zh_pinyin": "jiǎn zhǐ jiǎ", "zh_indo_spell": "cien je cia", "image_desc": "指甲剪與手指"}, {"id": "w_53", "category": "04 照護動作", "id_text": "Pijat", "id_zh_approx": "比架", "zh": "按摩", "zh_pinyin": "àn mó", "zh_indo_spell": "an mo", "image_desc": "雙手按摩長輩的肩膀"}, {"id": "w_54", "category": "04 照護動作", "id_text": "Kursi roda", "id_zh_approx": "庫爾西・羅達", "zh": "輪椅", "zh_pinyin": "lún yǐ", "zh_indo_spell": "lun i", "image_desc": "輪椅"}, {"id": "w_55", "category": "04 照護動作", "id_text": "Tempat tidur", "id_zh_approx": "談巴・地都爾", "zh": "病床", "zh_pinyin": "bìng chuáng", "zh_indo_spell": "bing cuang", "image_desc": "可升降的照護床"}, {"id": "w_56", "category": "04 照護動作", "id_text": "Buang air kecil", "id_zh_approx": "布昂・愛爾・克基爾", "zh": "小便", "zh_pinyin": "xiǎo biàn", "zh_indo_spell": "syiau bien", "image_desc": "馬桶與便盆"}, {"id": "w_57", "category": "04 照護動作", "id_text": "Buang air besar", "id_zh_approx": "布昂・愛爾・貝薩爾", "zh": "大便", "zh_pinyin": "dà biàn", "zh_indo_spell": "da bien", "image_desc": "馬桶與衛生紙"}, {"id": "w_58", "category": "04 照護動作", "id_text": "Jemur", "id_zh_approx": "者母爾", "zh": "曬太陽", "zh_pinyin": "shài tài yáng", "zh_indo_spell": "syai tai yang", "image_desc": "長輩坐在陽台曬太陽"}, {"id": "w_59", "category": "04 照護動作", "id_text": "Olahraga", "id_zh_approx": "歐拉拉嘎", "zh": "運動", "zh_pinyin": "yùn dòng", "zh_indo_spell": "yun dong", "image_desc": "長輩做手部復健運動"}, {"id": "w_60", "category": "05 身體部位", "id_text": "Kepala", "id_zh_approx": "克巴拉", "zh": "頭", "zh_pinyin": "tóu", "zh_indo_spell": "tou", "image_desc": "指向頭部"}, {"id": "w_61", "category": "05 身體部位", "id_text": "Mata", "id_zh_approx": "馬達", "zh": "眼睛", "zh_pinyin": "yǎn jīng", "zh_indo_spell": "yen cing", "image_desc": "眼睛特寫"}, {"id": "w_62", "category": "05 身體部位", "id_text": "Telinga", "id_zh_approx": "特林阿", "zh": "耳朵", "zh_pinyin": "ěr duǒ", "zh_indo_spell": "er duo", "image_desc": "耳朵特寫"}, {"id": "w_63", "category": "05 身體部位", "id_text": "Hidung", "id_zh_approx": "希東", "zh": "鼻子", "zh_pinyin": "bí zi", "zh_indo_spell": "bi tse", "image_desc": "鼻子特寫"}, {"id": "w_64", "category": "05 身體部位", "id_text": "Mulut", "id_zh_approx": "母魯", "zh": "嘴巴", "zh_pinyin": "zuǐ bā", "zh_indo_spell": "tsuei ba", "image_desc": "嘴巴特寫"}, {"id": "w_65", "category": "05 身體部位", "id_text": "Gigi", "id_zh_approx": "基基", "zh": "牙齒", "zh_pinyin": "yá chǐ", "zh_indo_spell": "ya ce", "image_desc": "牙齒特寫"}, {"id": "w_66", "category": "05 身體部位", "id_text": "Leher", "id_zh_approx": "勒赫爾", "zh": "脖子", "zh_pinyin": "bó zi", "zh_indo_spell": "bo tse", "image_desc": "指向脖子"}, {"id": "w_67", "category": "05 身體部位", "id_text": "Tangan", "id_zh_approx": "當安", "zh": "手", "zh_pinyin": "shǒu", "zh_indo_spell": "syou", "image_desc": "手掌"}, {"id": "w_68", "category": "05 身體部位", "id_text": "Kaki", "id_zh_approx": "卡基", "zh": "腳", "zh_pinyin": "jiǎo", "zh_indo_spell": "ciau", "image_desc": "腳與腿部"}, {"id": "w_69", "category": "05 身體部位", "id_text": "Perut", "id_zh_approx": "波魯", "zh": "肚子", "zh_pinyin": "dǔ zi", "zh_indo_spell": "du tse", "image_desc": "指向腹部"}, {"id": "w_70", "category": "05 身體部位", "id_text": "Dada", "id_zh_approx": "達達", "zh": "胸部", "zh_pinyin": "xiōng bù", "zh_indo_spell": "syiong bu", "image_desc": "指向胸口"}, {"id": "w_71", "category": "05 身體部位", "id_text": "Punggung", "id_zh_approx": "崩公", "zh": "背", "zh_pinyin": "bèi", "zh_indo_spell": "bei", "image_desc": "指向背部"}, {"id": "w_72", "category": "05 身體部位", "id_text": "Pinggang", "id_zh_approx": "冰乾", "zh": "腰", "zh_pinyin": "yāo", "zh_indo_spell": "yau", "image_desc": "指向腰部"}, {"id": "w_73", "category": "05 身體部位", "id_text": "Kulit", "id_zh_approx": "庫利", "zh": "皮膚", "zh_pinyin": "pí fū", "zh_indo_spell": "pi fu", "image_desc": "手臂皮膚特寫"}, {"id": "w_74", "category": "06 症狀不適", "id_text": "Sakit", "id_zh_approx": "沙基", "zh": "痛", "zh_pinyin": "tòng", "zh_indo_spell": "tong", "image_desc": "皺眉表情與紅色疼痛標記"}, {"id": "w_75", "category": "06 症狀不適", "id_text": "Demam", "id_zh_approx": "德曼", "zh": "發燒", "zh_pinyin": "fā shāo", "zh_indo_spell": "fa syau", "image_desc": "額頭體溫計顯示高溫"}, {"id": "w_76", "category": "06 症狀不適", "id_text": "Batuk", "id_zh_approx": "巴度", "zh": "咳嗽", "zh_pinyin": "ké sòu", "zh_indo_spell": "ke sou", "image_desc": "捂嘴咳嗽"}, {"id": "w_77", "category": "06 症狀不適", "id_text": "Pilek", "id_zh_approx": "比勒", "zh": "流鼻水", "zh_pinyin": "liú bí shuǐ", "zh_indo_spell": "liou bi syuei", "image_desc": "擤鼻涕拿衛生紙"}, {"id": "w_78", "category": "06 症狀不適", "id_text": "Pusing", "id_zh_approx": "布信", "zh": "頭暈", "zh_pinyin": "tóu yūn", "zh_indo_spell": "tou yun", "image_desc": "頭上出現旋轉符號"}, {"id": "w_79", "category": "06 症狀不適", "id_text": "Mual", "id_zh_approx": "母阿爾", "zh": "噁心想吐", "zh_pinyin": "ě xīn xiǎng tǔ", "zh_indo_spell": "e syin syiang tu", "image_desc": "捂住嘴巴不適的樣子"}, {"id": "w_80", "category": "06 症狀不適", "id_text": "Muntah", "id_zh_approx": "母恩達", "zh": "嘔吐", "zh_pinyin": "ǒu tǔ", "zh_indo_spell": "ou tu", "image_desc": "彎腰對著臉盆"}, {"id": "w_81", "category": "06 症狀不適", "id_text": "Diare", "id_zh_approx": "地阿雷", "zh": "拉肚子", "zh_pinyin": "lā dù zi", "zh_indo_spell": "la du tse", "image_desc": "急忙走向廁所"}, {"id": "w_82", "category": "06 症狀不適", "id_text": "Sembelit", "id_zh_approx": "森伯利", "zh": "便秘", "zh_pinyin": "biàn mì", "zh_indo_spell": "bien mi", "image_desc": "坐在馬桶上不適的表情"}, {"id": "w_83", "category": "06 症狀不適", "id_text": "Luka", "id_zh_approx": "魯卡", "zh": "傷口", "zh_pinyin": "shāng kǒu", "zh_indo_spell": "syang kou", "image_desc": "手臂上貼著紗布"}, {"id": "w_84", "category": "06 症狀不適", "id_text": "Bengkak", "id_zh_approx": "崩卡", "zh": "腫", "zh_pinyin": "zhǒng", "zh_indo_spell": "jong", "image_desc": "腳踝腫脹"}, {"id": "w_85", "category": "06 症狀不適", "id_text": "Gatal", "id_zh_approx": "嘎達爾", "zh": "癢", "zh_pinyin": "yǎng", "zh_indo_spell": "yang", "image_desc": "抓手臂的動作"}, {"id": "w_86", "category": "06 症狀不適", "id_text": "Capek", "id_zh_approx": "查貝", "zh": "累", "zh_pinyin": "lèi", "zh_indo_spell": "lei", "image_desc": "疲倦打呵欠"}, {"id": "w_87", "category": "06 症狀不適", "id_text": "Sesak napas", "id_zh_approx": "斯薩・那巴斯", "zh": "呼吸困難", "zh_pinyin": "hū xī kùn nán", "zh_indo_spell": "hu syi kun nan", "image_desc": "手扶胸口喘氣"}, {"id": "w_88", "category": "06 症狀不適", "id_text": "Lemas", "id_zh_approx": "勒馬斯", "zh": "虛弱無力", "zh_pinyin": "xū ruò wú lì", "zh_indo_spell": "syu ruo u li", "image_desc": "無力靠在椅背上"}, {"id": "w_89", "category": "06 症狀不適", "id_text": "Luka baring", "id_zh_approx": "魯卡・巴林", "zh": "褥瘡", "zh_pinyin": "rù chuāng", "zh_indo_spell": "ru cuang", "image_desc": "臥床照護與翻身提醒"}, {"id": "w_90", "category": "07 飲食", "id_text": "Makan", "id_zh_approx": "馬乾", "zh": "吃飯", "zh_pinyin": "chī fàn", "zh_indo_spell": "ce fan", "image_desc": "長輩在餐桌前吃飯"}, {"id": "w_91", "category": "07 飲食", "id_text": "Minum", "id_zh_approx": "米農", "zh": "喝", "zh_pinyin": "hē", "zh_indo_spell": "he", "image_desc": "拿杯子喝水"}, {"id": "w_92", "category": "07 飲食", "id_text": "Nasi", "id_zh_approx": "那西", "zh": "白飯", "zh_pinyin": "bái fàn", "zh_indo_spell": "bai fan", "image_desc": "一碗白飯"}, {"id": "w_93", "category": "07 飲食", "id_text": "Bubur", "id_zh_approx": "布布爾", "zh": "粥", "zh_pinyin": "zhōu", "zh_indo_spell": "jou", "image_desc": "一碗熱粥"}, {"id": "w_94", "category": "07 飲食", "id_text": "Mi", "id_zh_approx": "米", "zh": "麵", "zh_pinyin": "miàn", "zh_indo_spell": "mien", "image_desc": "一碗湯麵"}, {"id": "w_95", "category": "07 飲食", "id_text": "Air", "id_zh_approx": "愛爾", "zh": "水", "zh_pinyin": "shuǐ", "zh_indo_spell": "syuei", "image_desc": "一杯水"}, {"id": "w_96", "category": "07 飲食", "id_text": "Air panas", "id_zh_approx": "愛爾・巴那斯", "zh": "熱水", "zh_pinyin": "rè shuǐ", "zh_indo_spell": "re syuei", "image_desc": "冒著熱氣的水杯"}, {"id": "w_97", "category": "07 飲食", "id_text": "Air dingin", "id_zh_approx": "愛爾・丁因", "zh": "冰水", "zh_pinyin": "bīng shuǐ", "zh_indo_spell": "bing syuei", "image_desc": "加冰塊的水杯"}, {"id": "w_98", "category": "07 飲食", "id_text": "Susu", "id_zh_approx": "蘇蘇", "zh": "牛奶", "zh_pinyin": "niú nǎi", "zh_indo_spell": "niou nai", "image_desc": "一杯牛奶"}, {"id": "w_99", "category": "07 飲食", "id_text": "Teh", "id_zh_approx": "貼", "zh": "茶", "zh_pinyin": "chá", "zh_indo_spell": "ca", "image_desc": "一杯熱茶"}, {"id": "w_100", "category": "07 飲食", "id_text": "Sayur", "id_zh_approx": "沙又爾", "zh": "青菜", "zh_pinyin": "qīng cài", "zh_indo_spell": "cing tsai", "image_desc": "一盤炒青菜"}, {"id": "w_101", "category": "07 飲食", "id_text": "Buah", "id_zh_approx": "布阿", "zh": "水果", "zh_pinyin": "shuǐ guǒ", "zh_indo_spell": "syuei guo", "image_desc": "一盤切好的水果"}, {"id": "w_102", "category": "07 飲食", "id_text": "Daging", "id_zh_approx": "達今", "zh": "肉", "zh_pinyin": "ròu", "zh_indo_spell": "rou", "image_desc": "一盤肉類料理"}, {"id": "w_103", "category": "07 飲食", "id_text": "Ikan", "id_zh_approx": "衣乾", "zh": "魚", "zh_pinyin": "yú", "zh_indo_spell": "yu", "image_desc": "一盤蒸魚"}, {"id": "w_104", "category": "07 飲食", "id_text": "Telur", "id_zh_approx": "特魯爾", "zh": "蛋", "zh_pinyin": "dàn", "zh_indo_spell": "dan", "image_desc": "雞蛋"}, {"id": "w_105", "category": "07 飲食", "id_text": "Garam", "id_zh_approx": "嘎藍", "zh": "鹽", "zh_pinyin": "yán", "zh_indo_spell": "yen", "image_desc": "鹽罐"}, {"id": "w_106", "category": "07 飲食", "id_text": "Lapar", "id_zh_approx": "拉巴爾", "zh": "餓", "zh_pinyin": "è", "zh_indo_spell": "e", "image_desc": "摸著肚子想吃東西"}, {"id": "w_107", "category": "07 飲食", "id_text": "Haus", "id_zh_approx": "哈烏斯", "zh": "渴", "zh_pinyin": "kě", "zh_indo_spell": "ke", "image_desc": "想喝水的表情"}, {"id": "w_108", "category": "07 飲食", "id_text": "Kenyang", "id_zh_approx": "肯陽", "zh": "飽了", "zh_pinyin": "bǎo le", "zh_indo_spell": "bau le", "image_desc": "滿足地放下碗筷"}, {"id": "w_109", "category": "07 飲食", "id_text": "Hangat", "id_zh_approx": "哈阿", "zh": "溫的", "zh_pinyin": "wēn de", "zh_indo_spell": "uen de", "image_desc": "溫熱剛好的碗"}, {"id": "w_110", "category": "07 飲食", "id_text": "Halal", "id_zh_approx": "哈拉爾", "zh": "清真", "zh_pinyin": "qīng zhēn", "zh_indo_spell": "cing jen", "image_desc": "清真認證標示"}, {"id": "w_111", "category": "07 飲食", "id_text": "Babi", "id_zh_approx": "巴比", "zh": "豬肉", "zh_pinyin": "zhū ròu", "zh_indo_spell": "ju rou", "image_desc": "豬肉打上禁止符號"}, {"id": "w_112", "category": "07 飲食", "id_text": "Puasa", "id_zh_approx": "布阿沙", "zh": "齋戒", "zh_pinyin": "zhāi jiè", "zh_indo_spell": "jai cie", "image_desc": "日落後才進食的意象"}, {"id": "w_113", "category": "08 藥物就醫", "id_text": "Obat", "id_zh_approx": "歐巴", "zh": "藥", "zh_pinyin": "yào", "zh_indo_spell": "yau", "image_desc": "藥丸與藥盒"}, {"id": "w_114", "category": "08 藥物就醫", "id_text": "Minum obat", "id_zh_approx": "米農・歐巴", "zh": "吃藥", "zh_pinyin": "chī yào", "zh_indo_spell": "ce yau", "image_desc": "配水吃藥"}, {"id": "w_115", "category": "08 藥物就醫", "id_text": "Sebelum makan", "id_zh_approx": "斯波倫・馬乾", "zh": "飯前", "zh_pinyin": "fàn qián", "zh_indo_spell": "fan cien", "image_desc": "藥丸放在餐盤前"}, {"id": "w_116", "category": "08 藥物就醫", "id_text": "Sesudah makan", "id_zh_approx": "斯蘇達・馬乾", "zh": "飯後", "zh_pinyin": "fàn hòu", "zh_indo_spell": "fan hou", "image_desc": "餐後吃藥"}, {"id": "w_117", "category": "08 藥物就醫", "id_text": "Tekanan darah", "id_zh_approx": "特卡南・達拉", "zh": "血壓", "zh_pinyin": "xuè yā", "zh_indo_spell": "syue ya", "image_desc": "血壓計量測手臂"}, {"id": "w_118", "category": "08 藥物就醫", "id_text": "Gula darah", "id_zh_approx": "古拉・達拉", "zh": "血糖", "zh_pinyin": "xuè táng", "zh_indo_spell": "syue tang", "image_desc": "血糖機與試紙"}, {"id": "w_119", "category": "08 藥物就醫", "id_text": "Suhu badan", "id_zh_approx": "蘇胡・巴丹", "zh": "體溫", "zh_pinyin": "tǐ wēn", "zh_indo_spell": "ti uen", "image_desc": "額溫槍"}, {"id": "w_120", "category": "08 藥物就醫", "id_text": "Suntik", "id_zh_approx": "孫地", "zh": "打針", "zh_pinyin": "dǎ zhēn", "zh_indo_spell": "da jen", "image_desc": "注射針筒"}, {"id": "w_121", "category": "08 藥物就醫", "id_text": "Rumah sakit", "id_zh_approx": "路馬・沙基", "zh": "醫院", "zh_pinyin": "yī yuàn", "zh_indo_spell": "i yuen", "image_desc": "醫院建築外觀"}, {"id": "w_122", "category": "08 藥物就醫", "id_text": "Klinik", "id_zh_approx": "克利尼", "zh": "診所", "zh_pinyin": "zhěn suǒ", "zh_indo_spell": "jen suo", "image_desc": "小診所門口"}, {"id": "w_123", "category": "08 藥物就醫", "id_text": "Apotek", "id_zh_approx": "阿波貼", "zh": "藥局", "zh_pinyin": "yào jú", "zh_indo_spell": "yau cyu", "image_desc": "藥局櫃檯"}, {"id": "w_124", "category": "08 藥物就醫", "id_text": "Kartu kesehatan", "id_zh_approx": "卡爾度・克色哈丹", "zh": "健保卡", "zh_pinyin": "jiàn bǎo kǎ", "zh_indo_spell": "cien bau ka", "image_desc": "健保卡與證件"}, {"id": "w_125", "category": "08 藥物就醫", "id_text": "Jadwal obat", "id_zh_approx": "架德瓦・歐巴", "zh": "服藥時間表", "zh_pinyin": "fú yào shí jiān biǎo", "zh_indo_spell": "fu yau sye cien biau", "image_desc": "貼在牆上的服藥時間表"}, {"id": "w_126", "category": "09 家事清潔", "id_text": "Bersih", "id_zh_approx": "貝爾西", "zh": "乾淨", "zh_pinyin": "qián jìng", "zh_indo_spell": "cien cing", "image_desc": "整潔明亮的房間"}, {"id": "w_127", "category": "09 家事清潔", "id_text": "Kotor", "id_zh_approx": "哥多爾", "zh": "髒", "zh_pinyin": "zāng", "zh_indo_spell": "tsang", "image_desc": "髒亂待整理的角落"}, {"id": "w_128", "category": "09 家事清潔", "id_text": "Sapu", "id_zh_approx": "沙布", "zh": "掃地", "zh_pinyin": "sǎo dì", "zh_indo_spell": "sau di", "image_desc": "用掃把掃地"}, {"id": "w_129", "category": "09 家事清潔", "id_text": "Pel", "id_zh_approx": "貝爾", "zh": "拖地", "zh_pinyin": "tuō dì", "zh_indo_spell": "tuo di", "image_desc": "用拖把拖地"}, {"id": "w_130", "category": "09 家事清潔", "id_text": "Cuci piring", "id_zh_approx": "朱基・比林", "zh": "洗碗", "zh_pinyin": "xǐ wǎn", "zh_indo_spell": "syi uan", "image_desc": "在水槽洗碗"}, {"id": "w_131", "category": "09 家事清潔", "id_text": "Cuci baju", "id_zh_approx": "朱基・巴朱", "zh": "洗衣服", "zh_pinyin": "xǐ yī fú", "zh_indo_spell": "syi i fu", "image_desc": "洗衣機與衣物"}, {"id": "w_132", "category": "09 家事清潔", "id_text": "Jemur baju", "id_zh_approx": "者母爾・巴朱", "zh": "曬衣服", "zh_pinyin": "shài yī fú", "zh_indo_spell": "syai i fu", "image_desc": "陽台曬衣架"}, {"id": "w_133", "category": "09 家事清潔", "id_text": "Setrika", "id_zh_approx": "斯特利卡", "zh": "燙衣服", "zh_pinyin": "tàng yī fú", "zh_indo_spell": "tang i fu", "image_desc": "熨斗燙衣板"}, {"id": "w_134", "category": "09 家事清潔", "id_text": "Lipat baju", "id_zh_approx": "利巴・巴朱", "zh": "摺衣服", "zh_pinyin": "zhé yī fú", "zh_indo_spell": "je i fu", "image_desc": "摺好的衣物堆"}, {"id": "w_135", "category": "09 家事清潔", "id_text": "Masak", "id_zh_approx": "馬沙", "zh": "煮飯", "zh_pinyin": "zhǔ fàn", "zh_indo_spell": "ju fan", "image_desc": "在瓦斯爐前煮菜"}, {"id": "w_136", "category": "09 家事清潔", "id_text": "Buang sampah", "id_zh_approx": "布昂・山巴", "zh": "倒垃圾", "zh_pinyin": "dào lā jī", "zh_indo_spell": "dau la ci", "image_desc": "提垃圾袋出門"}, {"id": "w_137", "category": "09 家事清潔", "id_text": "Lap meja", "id_zh_approx": "拉・梅架", "zh": "擦桌子", "zh_pinyin": "cā zhuō zi", "zh_indo_spell": "tsa juo tse", "image_desc": "用抹布擦桌"}, {"id": "w_138", "category": "09 家事清潔", "id_text": "Dapur", "id_zh_approx": "達布爾", "zh": "廚房", "zh_pinyin": "chú fáng", "zh_indo_spell": "cu fang", "image_desc": "整潔的廚房"}, {"id": "w_139", "category": "09 家事清潔", "id_text": "Kamar mandi", "id_zh_approx": "卡馬爾・曼地", "zh": "浴室", "zh_pinyin": "yù shì", "zh_indo_spell": "yu sye", "image_desc": "浴室含扶手"}, {"id": "w_140", "category": "09 家事清潔", "id_text": "Kamar tidur", "id_zh_approx": "卡馬爾・地都爾", "zh": "臥室", "zh_pinyin": "wò shì", "zh_indo_spell": "uo sye", "image_desc": "臥室與床"}, {"id": "w_141", "category": "09 家事清潔", "id_text": "Kulkas", "id_zh_approx": "庫卡斯", "zh": "冰箱", "zh_pinyin": "bīng xiāng", "zh_indo_spell": "bing syiang", "image_desc": "冰箱"}, {"id": "w_142", "category": "09 家事清潔", "id_text": "Mesin cuci", "id_zh_approx": "梅信・朱基", "zh": "洗衣機", "zh_pinyin": "xǐ yī jī", "zh_indo_spell": "syi i ci", "image_desc": "洗衣機"}, {"id": "w_143", "category": "09 家事清潔", "id_text": "Sabun", "id_zh_approx": "沙布恩", "zh": "肥皂", "zh_pinyin": "féi zào", "zh_indo_spell": "fei tsau", "image_desc": "肥皂與清潔用品"}, {"id": "w_144", "category": "09 家事清潔", "id_text": "Handuk", "id_zh_approx": "汗督", "zh": "毛巾", "zh_pinyin": "máo jīn", "zh_indo_spell": "mau cin", "image_desc": "摺好的毛巾"}, {"id": "w_145", "category": "10 數字", "id_text": "Satu", "id_zh_approx": "沙度", "zh": "一", "zh_pinyin": "yī", "zh_indo_spell": "i", "image_desc": "數字 1"}, {"id": "w_146", "category": "10 數字", "id_text": "Dua", "id_zh_approx": "都阿", "zh": "二", "zh_pinyin": "èr", "zh_indo_spell": "er", "image_desc": "數字 2"}, {"id": "w_147", "category": "10 數字", "id_text": "Tiga", "id_zh_approx": "地嘎", "zh": "三", "zh_pinyin": "sān", "zh_indo_spell": "san", "image_desc": "數字 3"}, {"id": "w_148", "category": "10 數字", "id_text": "Empat", "id_zh_approx": "恩巴", "zh": "四", "zh_pinyin": "sì", "zh_indo_spell": "se", "image_desc": "數字 4"}, {"id": "w_149", "category": "10 數字", "id_text": "Lima", "id_zh_approx": "利馬", "zh": "五", "zh_pinyin": "wǔ", "zh_indo_spell": "u", "image_desc": "數字 5"}, {"id": "w_150", "category": "10 數字", "id_text": "Enam", "id_zh_approx": "俄南", "zh": "六", "zh_pinyin": "liù", "zh_indo_spell": "liou", "image_desc": "數字 6"}, {"id": "w_151", "category": "10 數字", "id_text": "Tujuh", "id_zh_approx": "度朱", "zh": "七", "zh_pinyin": "qī", "zh_indo_spell": "ci", "image_desc": "數字 7"}, {"id": "w_152", "category": "10 數字", "id_text": "Delapan", "id_zh_approx": "德拉班", "zh": "八", "zh_pinyin": "bā", "zh_indo_spell": "ba", "image_desc": "數字 8"}, {"id": "w_153", "category": "10 數字", "id_text": "Sembilan", "id_zh_approx": "森比藍", "zh": "九", "zh_pinyin": "jiǔ", "zh_indo_spell": "ciou", "image_desc": "數字 9"}, {"id": "w_154", "category": "10 數字", "id_text": "Sepuluh", "id_zh_approx": "斯布魯", "zh": "十", "zh_pinyin": "shí", "zh_indo_spell": "sye", "image_desc": "數字 10"}, {"id": "w_155", "category": "10 數字", "id_text": "Sebelas", "id_zh_approx": "斯波拉斯", "zh": "十一", "zh_pinyin": "shí yī", "zh_indo_spell": "sye i", "image_desc": "數字 11"}, {"id": "w_156", "category": "10 數字", "id_text": "Dua belas", "id_zh_approx": "都阿・波拉斯", "zh": "十二", "zh_pinyin": "shí èr", "zh_indo_spell": "sye er", "image_desc": "數字 12"}, {"id": "w_157", "category": "10 數字", "id_text": "Dua puluh", "id_zh_approx": "都阿・布魯", "zh": "二十", "zh_pinyin": "èr shí", "zh_indo_spell": "er sye", "image_desc": "數字 20"}, {"id": "w_158", "category": "10 數字", "id_text": "Seratus", "id_zh_approx": "斯拉度斯", "zh": "一百", "zh_pinyin": "yì bǎi", "zh_indo_spell": "i bai", "image_desc": "數字 100"}, {"id": "w_159", "category": "11 緊急狀況", "id_text": "Tolong!", "id_zh_approx": "多龍", "zh": "救命！", "zh_pinyin": "jiù mìng", "zh_indo_spell": "ciou ming", "image_desc": "舉手大聲求救"}, {"id": "w_160", "category": "11 緊急狀況", "id_text": "Darurat", "id_zh_approx": "達魯拉", "zh": "緊急", "zh_pinyin": "jǐn jí", "zh_indo_spell": "cin ci", "image_desc": "紅色緊急警示標誌"}, {"id": "w_161", "category": "11 緊急狀況", "id_text": "Jatuh", "id_zh_approx": "架度", "zh": "跌倒", "zh_pinyin": "diē dǎo", "zh_indo_spell": "die dau", "image_desc": "長輩在地板上，看護趕來"}, {"id": "w_162", "category": "11 緊急狀況", "id_text": "Berdarah", "id_zh_approx": "貝爾達拉", "zh": "流血", "zh_pinyin": "liú xiě", "zh_indo_spell": "liou syie", "image_desc": "手指出血貼 OK 繃"}, {"id": "w_163", "category": "11 緊急狀況", "id_text": "Tidak sadar", "id_zh_approx": "笛達・沙達爾", "zh": "失去意識", "zh_pinyin": "shī qù yì shí", "zh_indo_spell": "sye cyu i sye", "image_desc": "長輩閉眼無反應，看護呼喚"}, {"id": "w_164", "category": "11 緊急狀況", "id_text": "Panggil ambulans", "id_zh_approx": "班基・安布蘭斯", "zh": "叫救護車", "zh_pinyin": "jiào jiù hù chē", "zh_indo_spell": "ciau ciou hu ce", "image_desc": "救護車"}, {"id": "w_165", "category": "11 緊急狀況", "id_text": "Telepon", "id_zh_approx": "特勒朋", "zh": "打電話", "zh_pinyin": "dǎ diàn huà", "zh_indo_spell": "da dien hua", "image_desc": "拿手機撥號"}, {"id": "w_166", "category": "11 緊急狀況", "id_text": "Nomor darurat", "id_zh_approx": "諾莫・達魯拉", "zh": "緊急電話號碼", "zh_pinyin": "jǐn jí diàn huà hào mǎ", "zh_indo_spell": "cin ci dien hua hau ma", "image_desc": "牆上貼緊急聯絡電話"}, {"id": "w_167", "category": "11 緊急狀況", "id_text": "Kebakaran", "id_zh_approx": "克巴卡然", "zh": "火災", "zh_pinyin": "huǒ zāi", "zh_indo_spell": "huo tsai", "image_desc": "火警警報與滅火器"}, {"id": "w_168", "category": "11 緊急狀況", "id_text": "Gempa", "id_zh_approx": "根巴", "zh": "地震", "zh_pinyin": "dì zhèn", "zh_indo_spell": "di jen", "image_desc": "地震時躲在桌下"}, {"id": "w_169", "category": "11 緊急狀況", "id_text": "Hati-hati", "id_zh_approx": "哈地・哈地", "zh": "小心", "zh_pinyin": "xiǎo xīn", "zh_indo_spell": "syiau syin", "image_desc": "警告標誌與濕滑地板"}, {"id": "w_170", "category": "11 緊急狀況", "id_text": "Jangan", "id_zh_approx": "架安", "zh": "不要", "zh_pinyin": "bú yào", "zh_indo_spell": "bu yau", "image_desc": "禁止手勢"}], "dialogueSentences": [{"id": "s_1", "category": "問候關心", "id_text": "Selamat pagi, sudah bangun?", "id_zh_approx": "斯拉馬・巴基，蘇達・邦棍？", "zh": "早安，起床了嗎？", "zh_pinyin": "zǎo ān qǐ chuáng le ma", "zh_indo_spell": "tsau an ci cuang le ma"}, {"id": "s_2", "category": "問候關心", "id_text": "Apa kabar hari ini?", "id_zh_approx": "阿巴・卡巴爾・哈利・衣尼？", "zh": "今天還好嗎？", "zh_pinyin": "jīn tiān hái hǎo ma", "zh_indo_spell": "cin tien hai hau ma"}, {"id": "s_3", "category": "問候關心", "id_text": "Bagaimana perasaan Anda?", "id_zh_approx": "巴蓋馬那・波拉沙安・安達？", "zh": "你覺得怎麼樣？", "zh_pinyin": "nǐ jué dé zěn me yàng", "zh_indo_spell": "ni cyue de tsen me yang"}, {"id": "s_4", "category": "照護指示", "id_text": "Tolong bantu saya.", "id_zh_approx": "多龍・班度・沙呀", "zh": "請幫我一下。", "zh_pinyin": "qǐng bāng wǒ yī xià", "zh_indo_spell": "cing bang uo i syia"}, {"id": "s_5", "category": "照護指示", "id_text": "Tolong angkat pelan-pelan.", "id_zh_approx": "多龍・昂卡・波藍波藍", "zh": "請慢慢扶起來。", "zh_pinyin": "qǐng màn màn fú qǐ lái", "zh_indo_spell": "cing man man fu ci lai"}, {"id": "s_6", "category": "照護指示", "id_text": "Tolong balik badan setiap dua jam.", "id_zh_approx": "多龍・巴利・巴丹・斯地阿・都阿・醬", "zh": "請每兩小時翻身一次。", "zh_pinyin": "qǐng měi liǎng xiǎo shí fān shēn yī cì", "zh_indo_spell": "cing mei liang syiau sye fan syen i tse"}, {"id": "s_7", "category": "照護指示", "id_text": "Sudah mandi?", "id_zh_approx": "蘇達・曼地？", "zh": "洗澡了嗎？", "zh_pinyin": "xǐ zǎo le ma", "zh_indo_spell": "syi tsau le ma"}, {"id": "s_8", "category": "照護指示", "id_text": "Sudah ganti popok?", "id_zh_approx": "蘇達・干地・波波？", "zh": "尿布換了嗎？", "zh_pinyin": "niào bù huàn le ma", "zh_indo_spell": "niau bu huan le ma"}, {"id": "s_9", "category": "照護指示", "id_text": "Jangan tinggalkan sendirian.", "id_zh_approx": "架安・丁嘎爾干・森地利安", "zh": "不要讓他一個人。", "zh_pinyin": "bú yào ràng tā yī gè rén", "zh_indo_spell": "bu yau rang ta i ge ren"}, {"id": "s_10", "category": "照護指示", "id_text": "Pelan-pelan saja, jangan buru-buru.", "id_zh_approx": "波藍波藍・沙架，架安・布魯布魯", "zh": "慢慢來就好，不要急。", "zh_pinyin": "màn màn lái jiù hǎo bù yào jí", "zh_indo_spell": "man man lai ciou hau bu yau ci"}, {"id": "s_11", "category": "用藥飲食", "id_text": "Sudah minum obat?", "id_zh_approx": "蘇達・米農・歐巴？", "zh": "藥吃了嗎？", "zh_pinyin": "yào chī le ma", "zh_indo_spell": "yau ce le ma"}, {"id": "s_12", "category": "用藥飲食", "id_text": "Obat ini sesudah makan.", "id_zh_approx": "歐巴・衣尼・斯蘇達・馬乾", "zh": "這個藥飯後吃。", "zh_pinyin": "zhè gè yào fàn hòu chī", "zh_indo_spell": "je ge yau fan hou ce"}, {"id": "s_13", "category": "用藥飲食", "id_text": "Tolong ukur tekanan darah.", "id_zh_approx": "多龍・烏庫爾・特卡南・達拉", "zh": "請量血壓。", "zh_pinyin": "qǐng liàng xuè yā", "zh_indo_spell": "cing liang syue ya"}, {"id": "s_14", "category": "用藥飲食", "id_text": "Sudah makan siang?", "id_zh_approx": "蘇達・馬乾・西陽？", "zh": "午餐吃了嗎？", "zh_pinyin": "wǔ cān chī le ma", "zh_indo_spell": "u tsan ce le ma"}, {"id": "s_15", "category": "用藥飲食", "id_text": "Tolong beri air putih.", "id_zh_approx": "多龍・貝利・愛爾・布地", "zh": "請給他喝水。", "zh_pinyin": "qǐng gěi tā hē shuǐ", "zh_indo_spell": "cing gei ta he syuei"}, {"id": "s_16", "category": "身體狀況", "id_text": "Apakah sakit?", "id_zh_approx": "阿巴卡・沙基？", "zh": "會痛嗎？", "zh_pinyin": "huì tòng ma", "zh_indo_spell": "huei tong ma"}, {"id": "s_17", "category": "身體狀況", "id_text": "Sakit di mana?", "id_zh_approx": "沙基・地・馬那？", "zh": "哪裡痛？", "zh_pinyin": "nǎ lǐ tòng", "zh_indo_spell": "na li tong"}, {"id": "s_18", "category": "身體狀況", "id_text": "Ada demam?", "id_zh_approx": "阿達・德曼？", "zh": "有發燒嗎？", "zh_pinyin": "yǒu fā shāo ma", "zh_indo_spell": "you fa syau ma"}, {"id": "s_19", "category": "身體狀況", "id_text": "Sudah buang air besar hari ini?", "id_zh_approx": "蘇達・布昂愛爾貝薩爾・哈利衣尼？", "zh": "今天有大便嗎？", "zh_pinyin": "jīn tiān yǒu dà biàn ma", "zh_indo_spell": "cin tien you da bien ma"}, {"id": "s_20", "category": "溝通確認", "id_text": "Saya tidak mengerti.", "id_zh_approx": "沙呀・笛達・盟俄爾地", "zh": "我不懂。", "zh_pinyin": "wǒ bù dǒng", "zh_indo_spell": "uo bu dong"}, {"id": "s_21", "category": "溝通確認", "id_text": "Tolong ulangi sekali lagi.", "id_zh_approx": "多龍・烏藍基・斯卡利・拉基", "zh": "請再說一次。", "zh_pinyin": "qǐng zài shuō yī cì", "zh_indo_spell": "cing tsai syuo i tse"}, {"id": "s_22", "category": "溝通確認", "id_text": "Sudah selesai?", "id_zh_approx": "蘇達・斯勒賽？", "zh": "做完了嗎？", "zh_pinyin": "zuò wán le ma", "zh_indo_spell": "tsuo uan le ma"}, {"id": "s_23", "category": "溝通確認", "id_text": "Jangan lupa.", "id_zh_approx": "架安・魯巴", "zh": "不要忘記。", "zh_pinyin": "bú yào wàng jì", "zh_indo_spell": "bu yau wang ci"}, {"id": "s_24", "category": "溝通確認", "id_text": "Tidak apa-apa.", "id_zh_approx": "笛達・阿巴阿巴", "zh": "沒關係。", "zh_pinyin": "méi guān xì", "zh_indo_spell": "mei guan syi"}, {"id": "s_25", "category": "溝通確認", "id_text": "Bagus, terima kasih.", "id_zh_approx": "巴古斯，特里馬・卡西", "zh": "很好，謝謝你。", "zh_pinyin": "hěn hǎo xiè xiè nǐ", "zh_indo_spell": "hen hau syie syie ni"}, {"id": "s_26", "category": "緊急處理", "id_text": "Kalau ada apa-apa, panggil saya.", "id_zh_approx": "卡勞・阿達・阿巴阿巴，班基・沙呀", "zh": "有事情就叫我。", "zh_pinyin": "yǒu shì qíng jiù jiào wǒ", "zh_indo_spell": "you sye cing ciou ciau uo"}, {"id": "s_27", "category": "緊急處理", "id_text": "Segera telepon saya.", "id_zh_approx": "斯格拉・特勒朋・沙呀", "zh": "請馬上打電話給我。", "zh_pinyin": "qǐng mǎ shàng dǎ diàn huà gěi wǒ", "zh_indo_spell": "cing ma syang da dien hua gei uo"}, {"id": "s_28", "category": "緊急處理", "id_text": "Panggil ambulans sekarang!", "id_zh_approx": "班基・安布蘭斯・斯卡朗！", "zh": "現在叫救護車！", "zh_pinyin": "xiàn zài jiào jiù hù chē", "zh_indo_spell": "syien tsai ciau ciou hu ce"}, {"id": "s_29", "category": "緊急處理", "id_text": "Jangan panik, tetap tenang.", "id_zh_approx": "架安・巴尼，特搭・特囊", "zh": "不要慌，保持冷靜。", "zh_pinyin": "bú yào huāng bǎo chí lěng jìng", "zh_indo_spell": "bu yau huang bau ce leng cing"}, {"id": "s_30", "category": "生活安排", "id_text": "Besok kita pergi ke rumah sakit.", "id_zh_approx": "貝索克・基達・波爾基・克・路馬沙基", "zh": "明天我們要去醫院。", "zh_pinyin": "míng tiān wǒ men yào qù yī yuàn", "zh_indo_spell": "ming tien uo men yau cyu i yuen"}, {"id": "s_31", "category": "生活安排", "id_text": "Hari Minggu Anda libur.", "id_zh_approx": "哈利・明古・安達・利布爾", "zh": "星期日你休假。", "zh_pinyin": "xīng qī rì nǐ xiū jià", "zh_indo_spell": "sying ci re ni syiou cia"}, {"id": "s_32", "category": "生活安排", "id_text": "Kalau butuh sesuatu, bilang saja.", "id_zh_approx": "卡勞・布度・斯蘇阿度，比朗・沙架", "zh": "需要什麼就說。", "zh_pinyin": "xū yào shén me jiù shuō", "zh_indo_spell": "syu yau syen me ciou syuo"}]};
+
+    let currentMode = 'elder';
+    let currentTab = 'board';
+    let selectedCategory = 'ALL';
+    let completedTasks = JSON.parse(localStorage.getItem('bisa_completed_tasks') || '[]');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderQuickCards();
+      renderTaiwanesePhrases();
+      renderCategoryPills();
+      renderVocabCards();
+      renderTasks();
+      renderCultureNotes();
+      loadCustomMemo();
+      updateModeUI();
+    });
+
+    function toggleMode() {
+      currentMode = currentMode === 'elder' ? 'caregiver' : 'elder';
+      updateModeUI();
+      renderQuickCards();
+      renderTaiwanesePhrases();
+      renderVocabCards();
+      renderTasks();
+    }
+
+    function updateModeUI() {
+      const modeBtn = document.getElementById('modeToggleBtn');
+      const modeIcon = document.getElementById('modeIcon');
+      const modeText = document.getElementById('modeText');
+      const appTitle = document.getElementById('appTitle');
+      const appSubTitle = document.getElementById('appSubTitle');
+
+      if (currentMode === 'elder') {
+        modeBtn.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-sm bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200';
+        modeIcon.textContent = '👴';
+        modeText.textContent = '長輩模式 (中/台語)';
+        appTitle.textContent = '台印照護好幫手';
+        appSubTitle.textContent = 'Bisa! 雙語照護網 (雇主/長輩視角)';
+        document.getElementById('navLabelBoard').textContent = '發音板';
+        document.getElementById('navLabelLearn').textContent = '單字庫';
+        document.getElementById('navLabelTasks').textContent = '檢查表';
+        document.getElementById('navLabelMemo').textContent = '文化備忘';
+      } else {
+        modeBtn.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-sm bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200';
+        modeIcon.textContent = '🧕';
+        modeText.textContent = 'Mode Perawat';
+        appTitle.textContent = 'Bisa! CareBridge';
+        appSubTitle.textContent = 'Panduan Belajar Perawat Indonesia';
+        document.getElementById('navLabelBoard').textContent = 'Papan Suara';
+        document.getElementById('navLabelLearn').textContent = 'Kosakata';
+        document.getElementById('navLabelTasks').textContent = 'Tugas';
+        document.getElementById('navLabelMemo').textContent = 'Budaya';
+      }
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      const tabs = ['board', 'learn', 'tasks', 'memo'];
+      tabs.forEach(t => {
+        const content = document.getElementById('tabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+        const btn = document.getElementById('navBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (t === tabId) {
+          content.classList.remove('hidden');
+          btn.className = 'flex flex-col items-center justify-center py-1 text-emerald-600 font-bold transition';
+        } else {
+          content.classList.add('hidden');
+          btn.className = 'flex flex-col items-center justify-center py-1 text-slate-500 hover:text-emerald-600 transition font-medium';
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderQuickCards() {
+      const container = document.getElementById('quickCardsGrid');
+      container.innerHTML = '';
+      const isElder = currentMode === 'elder';
+
+      careData.quickCards.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'pulse-btn cursor-pointer bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-md rounded-2xl p-3.5 transition flex flex-col justify-between shadow-xs';
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <span class="text-2xl">${c.icon}</span>
+            <button onclick="event.stopPropagation(); speakBilingual('${escapeQuotes(c.zh)}', '${escapeQuotes(c.id_text)}')" class="p-1.5 rounded-full bg-slate-100 hover:bg-emerald-100 text-emerald-700 text-xs transition">
+              🔊
+            </button>
+          </div>
+          <div class="mt-2">
+            <div class="${isElder ? 'text-lg font-bold text-slate-900' : 'text-sm font-semibold text-slate-700'}">
+              ${c.zh}
+            </div>
+            <div class="text-xs text-amber-700 font-medium mt-0.5">
+              ${c.tw}
+            </div>
+            <div class="${!isElder ? 'text-base font-bold text-emerald-800' : 'text-xs text-slate-500'} mt-1">
+              ${c.id_text}
+            </div>
+            <div class="text-[11px] text-slate-400">
+              ${isElder ? c.id_zh : c.zh_indo}
+            </div>
+          </div>
+        `;
+
+        card.onclick = () => {
+          if (isElder) {
+            speakText(c.id_text, 'id-ID');
+          } else {
+            speakText(c.zh, 'zh-TW');
+          }
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderTaiwanesePhrases() {
+      const container = document.getElementById('taiwanesePhrasesList');
+      container.innerHTML = '';
+
+      careData.taiwanesePhrases.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'bg-white rounded-xl p-3 border border-amber-200 flex items-center justify-between cursor-pointer hover:bg-amber-50/50 transition';
+        
+        item.innerHTML = `
+          <div class="space-y-0.5">
+            <div class="flex items-center space-x-2">
+              <span class="text-lg">${p.icon}</span>
+              <span class="text-base font-bold text-amber-950">${p.tw}</span>
+              <span class="text-xs text-amber-700 font-mono">(${p.tw_roman})</span>
+            </div>
+            <div class="text-xs text-slate-700 pl-6">
+              華語：${p.zh}
+            </div>
+            <div class="text-xs text-emerald-800 font-medium pl-6">
+              印尼文：${p.id_text} <span class="text-[11px] text-slate-400 font-normal">(${p.id_zh_approx})</span>
+            </div>
+          </div>
+          <button onclick="event.stopPropagation(); speakText('${escapeQuotes(p.id_text)}', 'id-ID')" class="p-2 text-emerald-600 hover:bg-emerald-100 rounded-full transition">
+            🔊
+          </button>
+        `;
+
+        item.onclick = () => {
+          speakText(p.id_text, 'id-ID');
+        };
+
+        container.appendChild(item);
+      });
+    }
+
+    function renderCategoryPills() {
+      const container = document.getElementById('categoryPills');
+      const categories = ['ALL', ...new Set(careData.words.map(w => w.category))];
+
+      container.innerHTML = '';
+      categories.forEach(cat => {
+        const pill = document.createElement('button');
+        const isActive = selectedCategory === cat;
+        pill.className = `px-3 py-1.5 rounded-full font-bold whitespace-nowrap transition ${
+          isActive 
+            ? 'bg-emerald-600 text-white shadow-xs' 
+            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+        }`;
+        pill.textContent = cat === 'ALL' ? '全部分類 (Semua)' : cat;
+        pill.onclick = () => {
+          selectedCategory = cat;
+          renderCategoryPills();
+          renderVocabCards();
+        };
+        container.appendChild(pill);
+      });
+    }
+
+    function renderVocabCards() {
+      const container = document.getElementById('vocabGrid');
+      const query = (document.getElementById('vocabSearchInput')?.value || '').toLowerCase().trim();
+      const isElder = currentMode === 'elder';
+
+      let filtered = careData.words;
+      if (selectedCategory !== 'ALL') {
+        filtered = filtered.filter(w => w.category === selectedCategory);
+      }
+      if (query) {
+        filtered = filtered.filter(w => 
+          w.zh.toLowerCase().includes(query) ||
+          w.id_text.toLowerCase().includes(query) ||
+          w.zh_pinyin.toLowerCase().includes(query) ||
+          w.zh_indo_spell.toLowerCase().includes(query) ||
+          w.id_zh_approx.toLowerCase().includes(query)
+        );
+      }
+
+      document.getElementById('vocabCount').textContent = `共 ${filtered.length} 筆單字`;
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-sm">找不到相符單字，請嘗試不同關鍵字。</div>`;
+        return;
+      }
+
+      filtered.forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-300 transition shadow-xs flex items-center justify-between cursor-pointer';
+
+        card.innerHTML = `
+          <div class="space-y-0.5">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">${w.category.substring(0, 5)}</span>
+              <span class="${isElder ? 'text-base font-bold text-slate-900' : 'text-sm font-semibold text-slate-700'}">${w.zh}</span>
+              <span class="text-xs text-slate-400 font-mono">${w.zh_pinyin}</span>
+            </div>
+            <div class="${!isElder ? 'text-base font-bold text-emerald-700' : 'text-xs text-slate-600'}">
+              ${w.id_text}
+            </div>
+            <div class="text-[11px] text-slate-400">
+              ${isElder ? '家人念：' + w.id_zh_approx : '看護念：' + w.zh_indo_spell}
+            </div>
+          </div>
+          <div class="flex space-x-1">
+            <button title="印尼語發音" onclick="event.stopPropagation(); speakText('${escapeQuotes(w.id_text)}', 'id-ID')" class="px-2 py-1 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md font-bold">
+              ID
+            </button>
+            <button title="中文發音" onclick="event.stopPropagation(); speakText('${escapeQuotes(w.zh)}', 'zh-TW')" class="px-2 py-1 text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-md font-bold">
+              中
+            </button>
+          </div>
+        `;
+
+        card.onclick = () => {
+          if (isElder) speakText(w.id_text, 'id-ID');
+          else speakText(w.zh, 'zh-TW');
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    function filterVocab() {
+      renderVocabCards();
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('taskListContainer');
+      container.innerHTML = '';
+
+      let count = 0;
+      careData.dailyTasks.forEach(t => {
+        const isDone = completedTasks.includes(t.id);
+        if (isDone) count++;
+
+        const item = document.createElement('div');
+        item.className = `p-3.5 rounded-xl border transition flex items-start space-x-3 cursor-pointer ${
+          isDone 
+            ? 'bg-slate-50 border-slate-200 opacity-60' 
+            : 'bg-white border-slate-200 hover:border-emerald-300 shadow-xs'
+        }`;
+
+        item.innerHTML = `
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTask('${t.id}')" class="mt-1 h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+          <div class="flex-1 space-y-1" onclick="toggleTask('${t.id}')">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">${t.time}</span>
+              <span class="text-sm font-bold ${isDone ? 'line-through text-slate-400' : 'text-slate-900'}">${t.zh_full}</span>
+            </div>
+            <div class="text-xs text-emerald-800 font-medium">
+              ${t.id_full}
+            </div>
+          </div>
+          <button onclick="event.stopPropagation(); speakText('${escapeQuotes(t.id_full)}', 'id-ID')" class="text-xs text-emerald-600 hover:bg-emerald-50 p-2 rounded-lg transition">
+            🔊
+          </button>
+        `;
+
+        container.appendChild(item);
+      });
+
+      const total = careData.dailyTasks.length;
+      const percent = Math.round((count / total) * 100);
+      document.getElementById('taskProgressText').textContent = `今日進度：${count} / ${total} 已完成 (${percent}%)`;
+      document.getElementById('taskProgressBar').style.width = `${percent}%`;
+    }
+
+    function toggleTask(id) {
+      if (completedTasks.includes(id)) {
+        completedTasks = completedTasks.filter(item => item !== id);
+      } else {
+        completedTasks.push(id);
+      }
+      localStorage.setItem('bisa_completed_tasks', JSON.stringify(completedTasks));
+      renderTasks();
+    }
+
+    function resetTasks() {
+      if (confirm('確定要重置今日的所有打勾進度嗎？')) {
+        completedTasks = [];
+        localStorage.setItem('bisa_completed_tasks', JSON.stringify(completedTasks));
+        renderTasks();
+      }
+    }
+
+    function renderCultureNotes() {
+      const container = document.getElementById('cultureCardsContainer');
+      container.innerHTML = '';
+
+      careData.cultureNotes.forEach(n => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900">${n.title}</h3>
+            <span class="text-xs text-emerald-700 font-medium">${n.title_id}</span>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">${n.content_zh}</p>
+          <div class="p-2.5 bg-slate-50 rounded-xl text-xs text-slate-500 font-medium">
+            ${n.content_id}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function saveCustomMemo() {
+      const text = document.getElementById('customMemoInput').value;
+      localStorage.setItem('bisa_custom_memo', text);
+    }
+
+    function loadCustomMemo() {
+      const text = localStorage.getItem('bisa_custom_memo') || '';
+      document.getElementById('customMemoInput').value = text;
+    }
+
+    function speakText(text, lang = 'zh-TW') {
+      if (!('speechSynthesis' in window)) {
+        alert('您的瀏覽器不支援語音播放功能');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakBilingual(zhText, idText) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u1 = new SpeechSynthesisUtterance(zhText);
+      u1.lang = 'zh-TW';
+      u1.rate = 0.9;
+      
+      const u2 = new SpeechSynthesisUtterance(idText);
+      u2.lang = 'id-ID';
+      u2.rate = 0.9;
+
+      u1.onend = () => {
+        setTimeout(() => window.speechSynthesis.speak(u2), 300);
+      };
+      window.speechSynthesis.speak(u1);
+    }
+
+    function escapeQuotes(str) {
+      if (!str) return '';
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

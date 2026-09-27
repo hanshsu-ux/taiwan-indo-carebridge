@@ -1,0 +1,16 @@
+{
+  "name": "台印照護好幫手 | Bisa! CareBridge",
+  "short_name": "CareBridge",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#16a34a",
+  "description": "台灣長輩與印尼看護專屬雙向溝通發音板與照護學習平台",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧓</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

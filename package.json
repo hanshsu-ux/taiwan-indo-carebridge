@@ -1,0 +1,20 @@
+{
+  "name": "taiwan-indo-carebridge",
+  "version": "1.0.0",
+  "description": "台灣長輩與印尼看護專屬雙向溝通發音板與照護學習平台",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve .",
+    "build": "echo 'Static web application ready for Vercel deployment'"
+  },
+  "keywords": [
+    "caregiving",
+    "indonesian",
+    "taiwanese",
+    "elderly-care",
+    "pwa"
+  ],
+  "author": "",
+  "license": "MIT"
+}
