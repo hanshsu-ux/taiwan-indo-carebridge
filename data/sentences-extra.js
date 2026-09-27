@@ -1,5 +1,5 @@
 // 台印照護好幫手｜常用句（分類）
-// 由 index.html 載入：併入 careData.dialogueSentences，並在「發音板」頁加上分類常用句區塊。
+// 由 index.html 載入：併入 careData.dialogueSentences，並把「發音板」分頁改成分類常用句（原快速發聲板與台語區塊隱藏）。
 // 新增句子：在 extraSentences 尾端追加，id 接續 s_N，category 用「NN 分類名」，speaker 為「家人→看護」或「看護→媽媽」。
 (function () {
   const extraSentences = [
@@ -139,9 +139,27 @@
     });
   };
 
+  // 「發音板」分頁改為「常用句」：常用句置頂，隱藏原本的快速發聲板與台語區塊
+  function applyBoardAsSentences() {
+    const board = document.getElementById('tabContentBoard');
+    const box = document.getElementById('sentenceSection');
+    if (board && box && board.firstElementChild !== box) board.insertBefore(box, board.firstElementChild);
+    ['quickCardsGrid', 'taiwanesePhrasesList'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.parentElement && el.parentElement.parentElement === board) el.parentElement.style.display = 'none';
+    });
+    const isElder = (typeof currentMode === 'undefined' ? 'elder' : currentMode) === 'elder';
+    const label = document.getElementById('navLabelBoard');
+    if (label) {
+      label.textContent = isElder ? '常用句' : 'Kalimat';
+      const icon = label.previousElementSibling;
+      if (icon && icon.tagName === 'SPAN') icon.textContent = '💬';
+    }
+  }
+
   const origToggle = window.toggleMode;
   if (typeof origToggle === 'function') {
-    window.toggleMode = function () { origToggle.apply(this, arguments); window.renderSentences(); };
+    window.toggleMode = function () { origToggle.apply(this, arguments); window.renderSentences(); applyBoardAsSentences(); };
   }
-  window.addEventListener('DOMContentLoaded', () => window.renderSentences());
+  window.addEventListener('DOMContentLoaded', () => { window.renderSentences(); applyBoardAsSentences(); });
 })();
